@@ -1,0 +1,415 @@
+def oyun_bilgilerini_al():
+    #bu fonksiyon kullanıcıdan alan genisliği ve oyuncuların taş yerine kullanacapı karakterleri alacak.
+    min_alan_genislik = 4
+    max_alan_genislik = 8
+    alan_girdisi_devam = True
+    while alan_girdisi_devam: #burada oyun alanının genisliğini doğru bir sekilde alana kadar sormayı sağladım.
+        try:
+            alan_genisligi = int(input("Oyun alanının satır/sütun sayısını giriniz(4-8):"))
+            if min_alan_genislik<=alan_genisligi<=max_alan_genislik:
+                alan_girdisi_devam = False
+        except:
+            pass
+
+    oyuncu_1_karakter = input("1. oyuncuyu temsil etmek için bir karakter giriniz:")
+    oyuncu_2_karakter = input("2. oyuncuyu temsil etmek için bir karakter giriniz:")
+    while True:
+        if oyuncu_1_karakter == oyuncu_2_karakter:
+            print("Oyuncuların temsil karakteri aynı olamaz.")
+            oyuncu_1_karakter = input("1. oyuncuyu temsil etmek için bir karakter giriniz:")
+            oyuncu_2_karakter = input("2. oyuncuyu temsil etmek için bir karakter giriniz:")
+
+        if len(oyuncu_1_karakter)>1 or len(oyuncu_2_karakter)>1:
+            print("Oyuncuların temsil karakteri boyutu 1 karakterden büyük olamaz ")
+            oyuncu_1_karakter = input("1. oyuncuyu temsil etmek için bir karakter giriniz:")
+            oyuncu_2_karakter = input("2. oyuncuyu temsil etmek için bir karakter giriniz:")
+
+        if oyuncu_1_karakter != oyuncu_2_karakter and len(oyuncu_1_karakter) == 1 and len(oyuncu_2_karakter) == 1:
+            break
+
+    return alan_genisligi,oyuncu_1_karakter,oyuncu_2_karakter
+
+def baslangic_konumlari_iceren_liste_olustur(alan_genisligi,oyuncu_1_kar,oyuncu_2_kar):
+    #bu fonksiyonda iki noyutlu liste oluşturup taşların konumlarını bu listelerden faydalanarak saklıyorum
+    tas_konumlar = []
+    for i in range(alan_genisligi-2):
+        liste = [0]*alan_genisligi
+        tas_konumlar.append(liste)
+    #burada taşları başlangıçta bulunacakları yere koydum.
+    baslangic_taslar_1 = [oyuncu_1_kar]*alan_genisligi
+    baslangic_taslar_2 = [oyuncu_2_kar]*alan_genisligi
+    tas_konumlar.insert(0,baslangic_taslar_2)
+    tas_konumlar.append(baslangic_taslar_1)
+    return tas_konumlar
+
+def oyun_alani_yazdir(alan_genisligi,tas_konumlar):
+    harf_listesi = ["A","B","C","D","E","F","G","H"]
+    print(" ", end="")#harfleri hizalamak için yazdırdım.
+
+    for harf_index in range(alan_genisligi):#alanın üstündeki harfleri yazdırdım.
+        print(f"   {harf_listesi[harf_index]}",end="")
+    print()
+
+    for satir_no in range(1,alan_genisligi+1):
+        print(" ","-"*(4*alan_genisligi))#satır çizgilerini yazdırdım.
+        print(f"{satir_no} ",end="")#sol tarafta satır numarasını yazdırdım.
+        for sutun_no in range(alan_genisligi):#burada sütun çizgilerini ve varsa taşları yazdırıyorum.
+            if tas_konumlar[satir_no-1][sutun_no] != 0:
+                print(f"| {tas_konumlar[satir_no-1][sutun_no]} ", end="")
+            else:
+                print("|", end="   ")
+        print("| ",f"{satir_no}")#burada sağ taraftaki numaraları yazdırdım.
+
+    print(" ", "-" * (4 * alan_genisligi))  #en alt satır çizgilerini yazdırdım.
+    print(" ", end="")#harfleri hizalamak için yazdırdım.
+
+    for harf_index in range(alan_genisligi):#alanın altındaki harfleri yazdırdım.
+        print(f"   {harf_listesi[harf_index]}",end="")
+    print()
+
+def hamle_kontrol(alan_genisligi,tas_konumlar,hamle_kar,diger_kar): #burada hata var
+    harf_listesi = ["A", "B", "C", "D", "E", "F", "G", "H"]
+    dogru_hamle = False
+    while dogru_hamle == False:
+        try:
+            hamle = input(f"Oyuncu {hamle_kar}, lütfen hareket ettirmek istediğiniz kendi taşınızın konumunu ve hedef konumu giriniz(3C 1C):")
+            hamle = hamle.upper()  # bu kodun amacı eğer konum 8a 4a gibi küçük girilirse hata mesajı döndürmeden
+            # hamle konumunu otomatik olarak düzeltmek.
+            try:
+                # satır değerleri listede arama için index olarak kullanılacak ve 0 dan başlaması gerekiyor.
+                b_kon_sat = int(hamle[0]) -1
+                b_kon_sut = harf_listesi.index(hamle[1])
+                h_kon_sat = int(hamle[3]) -1
+                h_kon_sut = harf_listesi.index(hamle[4])
+            except:
+                print("Hatalı hamle girişi.")
+                continue
+            # tahtanın dışında bir hedef konum girişini kontrol ediyorum
+            if (b_kon_sat >= alan_genisligi or h_kon_sat >= alan_genisligi) or (
+                    b_kon_sut >= alan_genisligi or h_kon_sut >= alan_genisligi):
+                print("Hatalı hamle girişi.")
+                continue
+            # burada hareket ettirilmeye çalışılan taşın hamle sırasına sahip kişiye mi ait olduğunu kontrol ettim.
+            if tas_konumlar[b_kon_sat][b_kon_sut] == diger_kar:
+                print("Sadece kendi taşınızın yerini değiştirebilirsiniz.")
+                continue
+            elif tas_konumlar[b_kon_sat][b_kon_sut] != hamle_kar:
+                print("Lütfen geçerli bir hamle giriniz.")
+                continue
+            # burada taşın yatay yada düşey hareket dışında hareket etmesini engelledim.
+            if b_kon_sat != h_kon_sat and b_kon_sut != h_kon_sut:
+                print("Yalnızca yatay veya düşey hareket edebilirsiniz.")
+                continue
+            #başka taş var mı blogunu tamamen incele
+            if b_kon_sut == h_kon_sut:  # burada düşey yaparken yolda başka taş var mı kontrol ediyorum.
+                yolda_tas_var = False
+                if h_kon_sat>b_kon_sat:
+                    for satir_index in range(b_kon_sat+1, h_kon_sat + 1):
+                        if tas_konumlar[satir_index][b_kon_sut] != 0:
+                            yolda_tas_var = True
+                            break
+                    if yolda_tas_var == True:
+                        print("Başka taşın üstünden atlayamazsınız.")
+                        continue
+                elif h_kon_sat<b_kon_sat:
+                    for satir_index in range(b_kon_sat-1, h_kon_sat-1,-1):
+                        if tas_konumlar[satir_index][b_kon_sut] != 0:
+                            yolda_tas_var = True
+                            break
+                    if yolda_tas_var == True:# HATA
+                        print("Başka taşın üstünden atlayamazsınız.")
+                        continue
+            elif b_kon_sat == h_kon_sat:  # burada yatay yaparken başka taş var mı kontrol ediyorum.
+                yolda_tas_var = False
+                if h_kon_sut>b_kon_sut:
+                    for sutun_index in range(b_kon_sut+1, h_kon_sut + 1):
+                        if tas_konumlar[b_kon_sat][sutun_index] != 0:
+                            yolda_tas_var = True
+                            break
+                    if yolda_tas_var == True: #hata burada sebebi bul.
+                        print("Başka taşın üstünden atlayamazsınız.")
+                        continue
+                elif h_kon_sut<b_kon_sut:
+                    for sutun_index in range(b_kon_sut -1, h_kon_sut - 1,-1):
+                        if tas_konumlar[b_kon_sat][sutun_index] != 0:
+                            yolda_tas_var = True
+                            break
+                    if yolda_tas_var == True:  # hata burada sebebi bul.
+                        print("Başka taşın üstünden atlayamazsınız.")
+                        continue
+
+            dogru_hamle = True
+        except:
+            pass
+    return b_kon_sat,b_kon_sut,h_kon_sat,h_kon_sut
+
+def kilitlenen_tas_hamlesi(tas_konumlari,hamle_kar,diger_kar,hamle_kit_tas_say,hamle_yeni_sat,hamle_yeni_sut):
+    liste_genisligi = len(tas_konumlari)
+    harf_listesi = ["A", "B", "C", "D", "E", "F", "G", "H"]
+    #kenarlar ve kenarlardan sonra iç tarafta bulunan sıradaki satır ve sürunların 4 tarafını kontrol ederken error
+    #alma ihtimalimiz var bu yüzden bu kısımların etrafının kontrolü try except blokları ile yapılacak.
+    kenar_riskli_bol_index = [0, 1, liste_genisligi - 2, liste_genisligi - 1]
+    #hamle yapılan taş riskli bölgenin içindeyse
+    if hamle_yeni_sat in kenar_riskli_bol_index or hamle_yeni_sut in kenar_riskli_bol_index:
+        #köşede kilit gerçekleşti mi? hamle karakterin yeni konumuna göre 8 şart bloğu yazılacak.
+        if hamle_yeni_sat == 0 and hamle_yeni_sut == 1 and tas_konumlari[1][0] == hamle_kar and tas_konumlari[0][0] == diger_kar:
+            tas_konumlari[0][0] = 0
+            print(f"{1}{harf_listesi[0]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        elif hamle_yeni_sat == 1 and hamle_yeni_sut == 0 and tas_konumlari[0][1] == hamle_kar and tas_konumlari[0][0] == diger_kar:
+            tas_konumlari[0][0] = 0
+            print(f"{1}{harf_listesi[0]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        elif hamle_yeni_sat == 0 and hamle_yeni_sut == liste_genisligi-2 and tas_konumlari[1][liste_genisligi-1] == hamle_kar and tas_konumlari[0][liste_genisligi-1] == diger_kar:
+            tas_konumlari[0][liste_genisligi - 1] = 0
+            print(f"{1}{harf_listesi[liste_genisligi-1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        elif hamle_yeni_sat == 1 and hamle_yeni_sut == liste_genisligi-1 and tas_konumlari[0][liste_genisligi-2] == hamle_kar and tas_konumlari[0][liste_genisligi-1]== diger_kar:
+            tas_konumlari[0][liste_genisligi - 1] = 0
+            print(f"{1}{harf_listesi[liste_genisligi - 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        elif hamle_yeni_sat == liste_genisligi -2 and hamle_yeni_sut == 0 and tas_konumlari[liste_genisligi-1][1] == hamle_kar and tas_konumlari[liste_genisligi-1][0] == diger_kar:
+            tas_konumlari[liste_genisligi-1][0] = 0
+            print(f"{liste_genisligi}{harf_listesi[0]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        elif hamle_yeni_sat == liste_genisligi-1 and hamle_yeni_sut == 1 and tas_konumlari[liste_genisligi-2][0] == hamle_kar and tas_konumlari[liste_genisligi-1][0] == diger_kar:
+            tas_konumlari[liste_genisligi - 1][0] = 0
+            print(f"{liste_genisligi}{harf_listesi[0]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        elif hamle_yeni_sat == liste_genisligi-2 and hamle_yeni_sut == liste_genisligi-1 and tas_konumlari[liste_genisligi-1][liste_genisligi-2] == hamle_kar and tas_konumlari[liste_genisligi-1][liste_genisligi-1] == diger_kar:
+            tas_konumlari[liste_genisligi-1][liste_genisligi-1] = 0
+            print(f"{liste_genisligi}{harf_listesi[liste_genisligi-1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        elif hamle_yeni_sat == liste_genisligi-1 and hamle_yeni_sut == liste_genisligi-2 and tas_konumlari[liste_genisligi-2][liste_genisligi-1] == hamle_kar and tas_konumlari[liste_genisligi-1][liste_genisligi-1] == diger_kar:
+            tas_konumlari[liste_genisligi - 1][liste_genisligi - 1] = 0
+            print(f"{liste_genisligi}{harf_listesi[liste_genisligi - 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+        #taş riskli bölgede yer alıyor fakat köşede değil buranın risksiz bölgeden farkı kilit durumu kontrol edilirken
+        #tas konumları listesinde bulunmayan bir indexin kontrolü sırasında hata alma durumudur önlem olarak 4 yöndeki
+        # taş kontrolleri try except bloğu altında yapılacak ki program çökmesin.
+
+        #ek olarak indexlein -1 ve -2 değerine ulaşması listede kontrolü yapılmaması gereken yerlerinde kontrolüne sebep
+        #oluyor bu durum sol kenar ve üst kenarda olunması durumunda sol kontrolü ve üst kontrolü durumunda hata
+        # verebileceği için bu kenarlara özel if bloğu ile kontrol yapılacak.
+        else:
+            #yukarıda bahsedilen durumu önlerken üst ve sol kenarın kesişim bölgesinde ise yalnızca sağ ve aşağı
+            # kontrolü yapılmalı
+            if hamle_yeni_sat in [0,1] and hamle_yeni_sut in [0,1]:
+                try:
+                    # sag yonde kilit durumu kontrolü
+                    if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 2] == hamle_kar and tas_konumlari[hamle_yeni_sat][
+                        hamle_yeni_sut + 1] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 1] = 0
+                        print(
+                            f"{hamle_yeni_sat + 1}{harf_listesi[hamle_yeni_sut + 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    # asagi yonde kilit durum kontrolu
+                    if tas_konumlari[hamle_yeni_sat + 2][hamle_yeni_sut] == hamle_kar and \
+                            tas_konumlari[hamle_yeni_sat + 1][hamle_yeni_sut] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat + 1][hamle_yeni_sut] = 0
+                        print(
+                            f"{hamle_yeni_sat + 2}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+            #sol kenar da kontrol yapıalcaksa sağ üst alt taraf kontrolü yapılacak.
+            elif hamle_yeni_sut in [0,1]:
+                try:
+                    # sag yonde kilit durumu kontrolü
+                    if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 2] == hamle_kar and tas_konumlari[hamle_yeni_sat][
+                        hamle_yeni_sut + 1] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 1] = 0
+                        print(
+                            f"{hamle_yeni_sat + 1}{harf_listesi[hamle_yeni_sut + 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    # yukarı yonde kilit durum kontrolu
+                    if tas_konumlari[hamle_yeni_sat - 2][hamle_yeni_sut] == hamle_kar and \
+                            tas_konumlari[hamle_yeni_sat - 1][hamle_yeni_sut] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat - 1][hamle_yeni_sut] = 0
+                        print(
+                            f"{hamle_yeni_sat}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    # asagi yonde kilit durum kontrolu
+                    if tas_konumlari[hamle_yeni_sat + 2][hamle_yeni_sut] == hamle_kar and \
+                            tas_konumlari[hamle_yeni_sat + 1][hamle_yeni_sut] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat + 1][hamle_yeni_sut] = 0
+                        print(
+                            f"{hamle_yeni_sat + 2}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+            #ust kenarda kontrol yapılacaksa sag sol alt taraf kontrolü yapılacak.
+            elif hamle_yeni_sat in [0,1]:
+                try:
+                    # sol yönde kilit durumu kontrolü
+                    if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut - 2] == hamle_kar and tas_konumlari[hamle_yeni_sat][
+                        hamle_yeni_sut - 1] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat][hamle_yeni_sut - 1] = 0
+                        print(
+                            f"{hamle_yeni_sat + 1}{harf_listesi[hamle_yeni_sut - 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    # sag yonde kilit durumu kontrolü
+                    if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 2] == hamle_kar and tas_konumlari[hamle_yeni_sat][
+                        hamle_yeni_sut + 1] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 1] = 0
+                        print(
+                            f"{hamle_yeni_sat + 1}{harf_listesi[hamle_yeni_sut + 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    # asagi yonde kilit durum kontrolu
+                    if tas_konumlari[hamle_yeni_sat + 2][hamle_yeni_sut] == hamle_kar and \
+                            tas_konumlari[hamle_yeni_sat + 1][hamle_yeni_sut] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat + 1][hamle_yeni_sut] = 0
+                        print(
+                            f"{hamle_yeni_sat + 2}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+            #bu else bloğu sağ kenar ve alt kenarda kontrol yapılacaksa devreye girecek.
+            else:
+                try:
+                    #sol yönde kilit durumu kontrolü
+                    if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut-2] == hamle_kar and tas_konumlari[hamle_yeni_sat][hamle_yeni_sut-1] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat][hamle_yeni_sut - 1] = 0
+                        print(f"{hamle_yeni_sat+1}{harf_listesi[hamle_yeni_sut-1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    #sag yonde kilit durumu kontrolü
+                    if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut+2] == hamle_kar and tas_konumlari[hamle_yeni_sat][hamle_yeni_sut+1] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat][hamle_yeni_sut+1] = 0
+                        print(f"{hamle_yeni_sat + 1}{harf_listesi[hamle_yeni_sut+1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    #yukarı yonde kilit durum kontrolu
+                    if tas_konumlari[hamle_yeni_sat-2][hamle_yeni_sut] == hamle_kar and tas_konumlari[hamle_yeni_sat-1][hamle_yeni_sut] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat-1][hamle_yeni_sut] = 0
+                        print(f"{hamle_yeni_sat}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+                try:
+                    #asagi yonde kilit durum kontrolu
+                    if tas_konumlari[hamle_yeni_sat+2][hamle_yeni_sut] == hamle_kar and tas_konumlari[hamle_yeni_sat+1][hamle_yeni_sut] == diger_kar:
+                        tas_konumlari[hamle_yeni_sat+1][hamle_yeni_sut] = 0
+                        print(f"{hamle_yeni_sat+2}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+                        hamle_kit_tas_say += 1
+                except:
+                    pass
+
+    #hamle yapılan taş riskli bölgenin dışındaysa taşların yeri kontrol edilirken index error alma şansımız yok bu
+    #sebeple try except bloğu kullanmadan taşların kilit durumu kontrol edilecek. ayrıca if bloklarının ayrı yazılma
+    #sebebi hamle sırasında iki taşın kilit olabilmesi durumudur.
+    else:
+        # sol yönde kilit durumu kontrolü
+        if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut - 2] == hamle_kar and tas_konumlari[hamle_yeni_sat][
+            hamle_yeni_sut - 1] == diger_kar:
+            tas_konumlari[hamle_yeni_sat][hamle_yeni_sut - 1] = 0
+            print(f"{hamle_yeni_sat + 1}{harf_listesi[hamle_yeni_sut - 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+
+        # sag yonde kilit durumu kontrolü
+        if tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 2] == hamle_kar and tas_konumlari[hamle_yeni_sat][
+            hamle_yeni_sut + 1] == diger_kar:
+            tas_konumlari[hamle_yeni_sat][hamle_yeni_sut + 1] = 0
+            print(f"{hamle_yeni_sat + 1}{harf_listesi[hamle_yeni_sut + 1]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+
+        # yukarı yonde kilit durum kontrolu
+        if tas_konumlari[hamle_yeni_sat - 2][hamle_yeni_sut] == hamle_kar and tas_konumlari[hamle_yeni_sat - 1][
+            hamle_yeni_sut] == diger_kar:
+            tas_konumlari[hamle_yeni_sat - 1][hamle_yeni_sut] = 0
+            print(f"{hamle_yeni_sat}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+
+        # asagi yonde kilit durum kontrolu
+        if tas_konumlari[hamle_yeni_sat + 2][hamle_yeni_sut] == hamle_kar and tas_konumlari[hamle_yeni_sat + 1][
+            hamle_yeni_sut] == diger_kar:
+            tas_konumlari[hamle_yeni_sat + 1][hamle_yeni_sut] = 0
+            print(f"{hamle_yeni_sat + 2}{harf_listesi[hamle_yeni_sut]} konumundaki taş kilitlendi ve dışarı çıkarıldı.")
+            hamle_kit_tas_say += 1
+
+    return hamle_kit_tas_say
+
+def oyunu_oynat(tas_konumlar,alan_genisligi,oyuncu_1_kar,oyuncu_2_kar):
+    #bu fonksiyonda siradaki oyuncudan yapmak istediği hamleyi al daha sonra hamleyi gerçekleştir ve olması gerekenler olsun.
+    #bu fonksiyonda taşların silinecek olması halindeki if bloklarının altına taşın silinmeden önce silinecek durumda oluşuunu
+    #gösteren ve bunu bildiren kod yazılabilir.
+    #en son konumlar listesini geri döndür.
+    #sıradaki oyuncu hamle sayısının tek çift oluşuna göre belirleneck.
+    #oyun bitene kadar bütün oyun burada dönecek.
+    oyun_devam = True
+    hamle_no = 1
+    harf_listesi = ["A", "B", "C", "D", "E", "F", "G", "H"]
+    harf_listesi_2 = ["a","b","c","d","e","f","g","h"]
+    kitlenen_tas_say_1 = 0
+    kitlenen_tas_say_2 = 0
+    while oyun_devam == True:
+        if hamle_no % 2 == 1:#hamle no eğer tek ise 1 numaralı oyuncunun sırası demektir.
+            b_kon_sat, b_kon_sut, h_kon_sat, h_kon_sut = hamle_kontrol(alan_genisligi,tas_konumlar,oyuncu_1_kar,oyuncu_2_kar)
+            #hatasız şekilde hamle konumları belirlendi burada hamle yapma sırası.
+            #burada taşların yeri güncellendi
+            tas_konumlar[h_kon_sat][h_kon_sut] = oyuncu_1_kar
+            tas_konumlar[b_kon_sat][b_kon_sut] = 0
+            #şimdi kilitlenen taşları belirlemek gerekiyor.
+            kitlenen_tas_say_1 = kilitlenen_tas_hamlesi(tas_konumlar,oyuncu_1_kar,oyuncu_2_kar,kitlenen_tas_say_1,h_kon_sat,h_kon_sut)
+            oyun_alani_yazdir(alan_genisligi,tas_konumlar)
+            if kitlenen_tas_say_1 == alan_genisligi -1: #oyunculardan biri rakibin tüm taşlarını kitlerse oyunu kazanır.
+                print(f"Oyuncu {oyuncu_1_kar} oyunu kazandı.")
+                oyun_devam = False
+        elif hamle_no % 2 == 0:#hamle no çift ise 2 numaralı oyuncunun sırası demektir.
+            b_kon_sat, b_kon_sut, h_kon_sat, h_kon_sut = hamle_kontrol(alan_genisligi, tas_konumlar, oyuncu_2_kar,oyuncu_1_kar)
+            # hatasız şekilde hamle konumları belirlendi burada hamle yapma sırası.
+            # burada taşların yeri güncellendi
+            tas_konumlar[h_kon_sat][h_kon_sut] = oyuncu_2_kar
+            tas_konumlar[b_kon_sat][b_kon_sut] = 0
+            # şimdi kilitlenen taşları belirlemek gerekiyor.
+            kitlenen_tas_say_2 = kilitlenen_tas_hamlesi(tas_konumlar,oyuncu_2_kar,oyuncu_1_kar,kitlenen_tas_say_2,h_kon_sat,h_kon_sut)
+            oyun_alani_yazdir(alan_genisligi,tas_konumlar)
+            if kitlenen_tas_say_2 == alan_genisligi -1: #oyunculardan biri rakibin tüm taşlarını kitlerse oyunu kazanır.
+                print(f"Oyuncu {oyuncu_2_kar} oyunu kazandı.")
+                oyun_devam = False
+
+        hamle_no += 1
+    return tas_konumlar
+
+def main():
+    oyuna_devam = "e"
+    while oyuna_devam in ["e","E"]:
+        #bu fonksiyon başlganıçta gerekli olan bilgileri alıyor.
+        alan_genisligi,oyuncu_1_kar,oyuncu_2_kar = oyun_bilgilerini_al()
+        #başlangıçtaki taş dizilimini alttaki satırda oluşturuyorum.
+        tas_konumlar = baslangic_konumlari_iceren_liste_olustur(alan_genisligi,oyuncu_1_kar,oyuncu_2_kar)
+        #oyun başlamadan önceki taş dizilimini yazdırdım.
+        oyun_alani_yazdir(alan_genisligi,tas_konumlar) #burada oyun başlamadan önce baslangıcta alanı yazdırıyorum.
+        oyunu_oynat(tas_konumlar,alan_genisligi,oyuncu_1_kar,oyuncu_2_kar) #buradaki fonkisyonda oyun bitene kadar oynanacak.
+        #bittikten sonra belki son kez alanı yazdırabilirim.
+        oyuna_devam = input("Tekrar oynamak ister misiniz(E/H)?:")
+
+main()
